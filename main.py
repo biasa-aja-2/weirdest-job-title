@@ -15,7 +15,9 @@ Self-check gates (the entry is refused, not written, if any fail):
   * not only whitespace
   * no control characters
 The file is written with no trailing newline, so its bytes are exactly
-the title and nothing else.
+the title and nothing else. After writing, the file is read back and
+the bytes are compared with the title: a mismatch fails the run, so a
+silent write error can never ship a wrong entry.
 """
 
 import os
@@ -58,6 +60,11 @@ def main():
     entry_path = os.path.join(output_dir, "entry.txt")
     with open(entry_path, "w", encoding="utf-8", newline="") as handle:
         handle.write(TITLE)
+    with open(entry_path, "rb") as handle:
+        on_disk = handle.read()
+    if on_disk != TITLE.encode("utf-8"):
+        print("gate failed: file on disk does not match the title", file=sys.stderr)
+        return 1
     print("wrote %d characters to %s" % (len(TITLE), entry_path))
     return 0
 
